@@ -1,0 +1,302 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<peasoup_search>
+  <misc_info>
+    <username>ebarr</username>
+    <local_datetime>2014-02-13-17:08</local_datetime>
+    <utc_datetime>2014-02-13-06:08</utc_datetime>
+  </misc_info>
+  <header_parameters>
+    <source_name>P: 250.000000000000 ms, DM: 30.000</source_name>
+    <rawdatafile></rawdatafile>
+    <az_start>0</az_start>
+    <za_start>0</za_start>
+    <src_raj>0</src_raj>
+    <src_dej>0</src_dej>
+    <tstart>50000</tstart>
+    <tsamp>0.00032</tsamp>
+    <period>0</period>
+    <fch1>1510</fch1>
+    <foff>-1.09</foff>
+    <nchans>64</nchans>
+    <telescope_id>0</telescope_id>
+    <machine_id>0</machine_id>
+    <data_type>1</data_type>
+    <ibeam>0</ibeam>
+    <nbeams>0</nbeams>
+    <nbits>2</nbits>
+    <barycentric>0</barycentric>
+    <pulsarcentric>0</pulsarcentric>
+    <nbins>0</nbins>
+    <nsamples>187520</nsamples>
+    <nifs>1</nifs>
+    <npuls>0</npuls>
+    <refdm>0</refdm>
+    <signed>136</signed>
+  </header_parameters>
+  <search_parameters>
+    <infilename>example_data/tutorial.fil</infilename>
+    <outdir>example_output/</outdir>
+    <killfilename></killfilename>
+    <zapfilename></zapfilename>
+    <max_num_threads>14</max_num_threads>
+    <size>0</size>
+    <dm_start>0</dm_start>
+    <dm_end>250</dm_end>
+    <dm_tol>1.10000002384186</dm_tol>
+    <dm_pulse_width>64</dm_pulse_width>
+    <acc_start>-5</acc_start>
+    <acc_end>5</acc_end>
+    <acc_tol>1.10000002384186</acc_tol>
+    <acc_pulse_width>64</acc_pulse_width>
+    <boundary_5_freq>0.0500000007450581</boundary_5_freq>
+    <boundary_25_freq>0.5</boundary_25_freq>
+    <nharmonics>4</nharmonics>
+    <npdmp>10</npdmp>
+    <min_snr>9</min_snr>
+    <min_freq>0.100000001490116</min_freq>
+    <max_freq>1100</max_freq>
+    <max_harm>16</max_harm>
+    <freq_tol>9.99999974737875e-05</freq_tol>
+    <verbose>0</verbose>
+    <progress_bar>1</progress_bar>
+  </search_parameters>
+  <dedispersion_trials count='59'>
+    <trial id='0'>0</trial>
+    <trial id='1'>3.3133590221405</trial>
+    <trial id='2'>6.61520433425903</trial>
+    <trial id='3'>9.90831470489502</trial>
+    <trial id='4'>13.195426940918</trial>
+    <trial id='5'>16.4792385101318</trial>
+    <trial id='6'>19.7624092102051</trial>
+    <trial id='7'>23.0475635528564</trial>
+    <trial id='8'>26.3372974395752</trial>
+    <trial id='9'>29.6341781616211</trial>
+    <trial id='10'>32.940746307373</trial>
+    <trial id='11'>36.2595176696777</trial>
+    <trial id='12'>39.5929908752441</trial>
+    <trial id='13'>42.9436454772949</trial>
+    <trial id='14'>46.3139457702637</trial>
+    <trial id='15'>49.7063446044922</trial>
+    <trial id='16'>53.1232872009277</trial>
+    <trial id='17'>56.5672073364258</trial>
+    <trial id='18'>60.0405349731445</trial>
+    <trial id='19'>63.5457038879395</trial>
+    <trial id='20'>67.0851364135742</trial>
+    <trial id='21'>70.6612777709961</trial>
+    <trial id='22'>74.2765579223633</trial>
+    <trial id='23'>77.9334182739258</trial>
+    <trial id='24'>81.6343231201172</trial>
+    <trial id='25'>85.3817367553711</trial>
+    <trial id='26'>89.1781387329102</trial>
+    <trial id='27'>93.0260314941406</trial>
+    <trial id='28'>96.9279327392578</trial>
+    <trial id='29'>100.886383056641</trial>
+    <trial id='30'>104.903945922852</trial>
+    <trial id='31'>108.983215332031</trial>
+    <trial id='32'>113.126800537109</trial>
+    <trial id='33'>117.337356567383</trial>
+    <trial id='34'>121.617561340332</trial>
+    <trial id='35'>125.970123291016</trial>
+    <trial id='36'>130.397796630859</trial>
+    <trial id='37'>134.903366088867</trial>
+    <trial id='38'>139.489669799805</trial>
+    <trial id='39'>144.159576416016</trial>
+    <trial id='40'>148.916015625</trial>
+    <trial id='41'>153.761932373047</trial>
+    <trial id='42'>158.70036315918</trial>
+    <trial id='43'>163.734359741211</trial>
+    <trial id='44'>168.867050170898</trial>
+    <trial id='45'>174.101593017578</trial>
+    <trial id='46'>179.44123840332</trial>
+    <trial id='47'>184.889282226562</trial>
+    <trial id='48'>190.449066162109</trial>
+    <trial id='49'>196.1240234375</trial>
+    <trial id='50'>201.91764831543</trial>
+    <trial id='51'>207.833480834961</trial>
+    <trial id='52'>213.87516784668</trial>
+    <trial id='53'>220.046401977539</trial>
+    <trial id='54'>226.350967407227</trial>
+    <trial id='55'>232.792724609375</trial>
+    <trial id='56'>239.375610351562</trial>
+    <trial id='57'>246.103652954102</trial>
+    <trial id='58'>252.980972290039</trial>
+  </dedispersion_trials>
+  <acceleration_trials DM='0' count='3'>
+    <trial id='0'>0</trial>
+    <trial id='1'>-5</trial>
+    <trial id='2'>5</trial>
+  </acceleration_trials>
+  <cuda_device_parameters>
+    <runtime>5000</runtime>
+    <driver>5000</driver>
+    <cuda_device id='0'>
+      <name>Tesla C2070</name>
+      <major_cc>2</major_cc>
+      <minor_cc>0</minor_cc>
+    </cuda_device>
+    <cuda_device id='1'>
+      <name>Tesla C2070</name>
+      <major_cc>2</major_cc>
+      <minor_cc>0</minor_cc>
+    </cuda_device>
+  </cuda_device_parameters>
+  <candidates>
+    <candidate id='0'>
+      <period>0.249939903165736</period>
+      <opt_period>0.249986439943314</opt_period>
+      <dm>19.7624092102051</dm>
+      <acc>0</acc>
+      <nh>4</nh>
+      <snr>86.9626083374023</snr>
+      <folded_snr>71.4956665039062</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>155</nassoc>
+      <byte_offset>0</byte_offset>
+    </candidate>
+    <candidate id='1'>
+      <period>0.25003302533532</period>
+      <opt_period>0.249986439943314</opt_period>
+      <dm>23.0475635528564</dm>
+      <acc>0</acc>
+      <nh>3</nh>
+      <snr>73.9640884399414</snr>
+      <folded_snr>72.5594100952148</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>164</nassoc>
+      <byte_offset>7856</byte_offset>
+    </candidate>
+    <candidate id='2'>
+      <period>0.249846850335071</period>
+      <opt_period>0.250009626150131</opt_period>
+      <dm>168.867050170898</dm>
+      <acc>5</acc>
+      <nh>3</nh>
+      <snr>53.5081558227539</snr>
+      <folded_snr>50.7492218017578</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>38</nassoc>
+      <byte_offset>15928</byte_offset>
+    </candidate>
+    <candidate id='3'>
+      <period>0.499693700670141</period>
+      <opt_period>0.500065743923187</opt_period>
+      <dm>9.90831470489502</dm>
+      <acc>-5</acc>
+      <nh>4</nh>
+      <snr>52.5980796813965</snr>
+      <folded_snr>9.89522075653076</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>47</nassoc>
+      <byte_offset>20976</byte_offset>
+    </candidate>
+    <candidate id='4'>
+      <period>0.249660952380952</period>
+      <opt_period>0.25000923871994</opt_period>
+      <dm>239.375610351562</dm>
+      <acc>0</acc>
+      <nh>2</nh>
+      <snr>42.9121894836426</snr>
+      <folded_snr>51.0543060302734</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>176</nassoc>
+      <byte_offset>26240</byte_offset>
+    </candidate>
+    <candidate id='5'>
+      <period>0.083302959285005</period>
+      <opt_period>0.0833339840173721</opt_period>
+      <dm>23.0475635528564</dm>
+      <acc>5</acc>
+      <nh>1</nh>
+      <snr>38.9516983032227</snr>
+      <folded_snr>48.6565551757812</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>176</nassoc>
+      <byte_offset>34600</byte_offset>
+    </candidate>
+    <candidate id='6'>
+      <period>0.124993235238934</period>
+      <opt_period>0.124999053776264</opt_period>
+      <dm>36.2595176696777</dm>
+      <acc>0</acc>
+      <nh>4</nh>
+      <snr>48.5954704284668</snr>
+      <folded_snr>36.0042953491211</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>104</nassoc>
+      <byte_offset>42960</byte_offset>
+    </candidate>
+    <candidate id='7'>
+      <period>0.062519903111608</period>
+      <opt_period>0.0624980591237545</opt_period>
+      <dm>67.0851364135742</dm>
+      <acc>5</acc>
+      <nh>3</nh>
+      <snr>27.6833229064941</snr>
+      <folded_snr>33.4804954528809</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>35</nassoc>
+      <byte_offset>49592</byte_offset>
+    </candidate>
+    <candidate id='8'>
+      <period>0.0277768476821192</period>
+      <opt_period>0.027779147028923</opt_period>
+      <dm>0</dm>
+      <acc>0</acc>
+      <nh>0</nh>
+      <snr>28.6387767791748</snr>
+      <folded_snr>29.8402633666992</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>116</nassoc>
+      <byte_offset>54568</byte_offset>
+    </candidate>
+    <candidate id='9'>
+      <period>0.500066050670641</period>
+      <opt_period>0.500066041946411</opt_period>
+      <dm>239.375610351562</dm>
+      <acc>0</acc>
+      <nh>3</nh>
+      <snr>29.3264007568359</snr>
+      <folded_snr>7.91464948654175</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>11</nassoc>
+      <byte_offset>61488</byte_offset>
+    </candidate>
+  </candidates>
+  <execution_times>
+    <dedispersion>0.0313570015132427</dedispersion>
+    <folding>0.101999998092651</folding>
+    <reading>0.00279600010253489</reading>
+    <searching>0.308782011270523</searching>
+    <total>0.769960045814514</total>
+  </execution_times>
+</peasoup_search>
