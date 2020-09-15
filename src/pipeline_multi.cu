@@ -30,12 +30,10 @@
 #include "pthread.h"
 #include <cmath>
 #include <map>
-typedef unsigned int DedispOutputType; 
-
 
 class DMDispenser {
 private:
-  DispersionTrials<DedispOutputType>& trials;
+  DispersionTrials<unsigned char>& trials;
   pthread_mutex_t mutex;
   int dm_idx;
   int count;
@@ -43,7 +41,7 @@ private:
   bool use_progress_bar;
 
 public:
-  DMDispenser(DispersionTrials<DedispOutputType>& trials)
+  DMDispenser(DispersionTrials<unsigned char>& trials)
     :trials(trials),dm_idx(0),use_progress_bar(false){
     count = trials.get_count();
     pthread_mutex_init(&mutex, NULL);
@@ -85,7 +83,7 @@ public:
 
 class Worker {
 private:
-  DispersionTrials<DedispOutputType>& trials;
+  DispersionTrials<unsigned char>& trials;
   DMDispenser& manager;
   CmdLineOptions& args;
   AccelerationPlan& acc_plan;
@@ -99,7 +97,7 @@ private:
 public:
   CandidateCollection_template_bank dm_trial_cands;
 
-  Worker(DispersionTrials<DedispOutputType>& trials, DMDispenser& manager, 
+  Worker(DispersionTrials<unsigned char>& trials, DMDispenser& manager, 
 	 AccelerationPlan& acc_plan, CmdLineOptions& args, unsigned int size, int device)
     :trials(trials),manager(manager),acc_plan(acc_plan),args(args),size(size),device(device){}
   
@@ -124,8 +122,8 @@ public:
     float tobs = size*trials.get_tsamp();
     float bin_width = 1.0/tobs;
     DeviceFourierSeries<cufftComplex> d_fseries(size/2+1,bin_width);
-    DedispersedTimeSeries<DedispOutputType> tim;
-    ReusableDeviceTimeSeries<float, DedispOutputType> d_tim(size);
+    DedispersedTimeSeries<unsigned char> tim;
+    ReusableDeviceTimeSeries<float,unsigned char> d_tim(size);
     //DeviceTimeSeries<float> d_tim_r(size);
     DeviceTimeSeries<float> d_tim_resampled(size);
     TimeDomainResampler resampler;
@@ -396,13 +394,9 @@ int main(int argc, char **argv)
 
   timers["dedispersion"].start();
   PUSH_NVTX_RANGE("Dedisperse",3)
-  DispersionTrials<DedispOutputType> trials = dedisperser.dedisperse();
+  DispersionTrials<unsigned char> trials = dedisperser.dedisperse();
   POP_NVTX_RANGE
   timers["dedispersion"].stop();
-
-//Write out a dedispersed time series file from the dedispersion tials
-//  unsigned int* data_ptr = trials[0].get_data();
-//  Utils::dump_host_buffer<unsigned int>(data_ptr,trials.get_nsamps(),"dedispersed_timeseries_new");
 
   if (args.progress_bar)
     printf("Complete (execution time %.2f s)\n",timers["dedispersion"].getTime());
@@ -500,7 +494,7 @@ if (args.templatefilename==""){
   dm_cands.cands.resize(new_size);
 
   CandidateFileWriter_template_bank cand_files(args.outdir);
-  //cand_files.write_binary(dm_cands.cands,"candidates_template_bank.peasoup");
+  cand_files.write_binary(dm_cands.cands,"candidates_template_bank.peasoup");
   OutputFileWriter_template_bank stats;
   stats.add_misc_info();
   stats.add_header(filename);
