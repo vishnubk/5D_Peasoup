@@ -28,6 +28,7 @@
 #include "cuda.h"
 #include <thrust/copy.h>
 #include <thrust/device_ptr.h>
+#include <thrust/host_vector.h>
 #include "utils/exceptions.hpp"
 #include "utils/utils.hpp"
 #include <data_types/header.hpp>
@@ -285,6 +286,7 @@ public:
       ErrorChecker::throw_error("DeviceTimeSeries::fill bad end value requested");
     GPU_fill(this->data_ptr+start,this->data_ptr+end,value);
   }
+
  
   /*!
     \brief Destruct the DeviceTimeSeries instance.
@@ -489,3 +491,17 @@ public:
   FilterbankChannel<T> operator[](int idx);
   FilterbankChannel<T> nearest_chan(float freq);
 };
+
+ /*
+
+ This function is added to replicate a numpy.arange(start, stop, step) of python in c++
+
+ */
+
+//template<typename T>
+//thrust::host_vector<T> arange(T start, T stop, T step = 1) {
+//    thrust::host_vector<T> values;
+//    for (T value = start; value < stop; value += step)
+//        values.push_back(value);
+//    return values;
+//}

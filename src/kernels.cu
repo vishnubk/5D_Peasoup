@@ -374,6 +374,30 @@ __device__ unsigned long getTemplate_Bank_Index(unsigned long idx,
     return __double2ull_rn(idx - (tau * sinX * inverse_tsamp - zero_offset));
 }
 
+__device__ double get_roemer_delay_elliptical_value(unsigned long idx, double omega, double tau, 
+    double phi_normalised, double long_periastron, double eccentricity, double sampling_time)
+
+{
+
+double orbital_period_seconds = 2 * M_PI/omega;
+double T0_periastron = phi_normalised * orbital_period_seconds;
+double mean_anomaly = omega * ((idx * sampling_time) - T0_periastron);
+double eccentric_anomaly = mean_anomaly + eccentricity * sin(mean_anomaly) * (1. + eccentricity * cos(mean_anomaly));
+
+//Computing eccentric anomaly by iterating kepler's equation
+// initializing to large value
+double du = 1.;
+while(abs(du) > 1.0e-8)
+{
+    du = (mean_anomaly - (eccentric_anomaly - eccentricity * sin(eccentric_anomaly)))/(1.0 - eccentricity * cos(eccentric_anomaly));
+    eccentric_anomaly+= du;
+}
+
+double roemer_delay = tau  * ((cos(eccentric_anomaly) - eccentricity) * sin(long_periastron) + sqrt(1 - pow(eccentricity,2)) * sin(eccentric_anomaly) * cos(long_periastron));
+
+return roemer_delay;
+}
+
 
 __global__ void compute_timeseries_length_circular_binary_kernel(float* d_resamp_offset, unsigned int nsamples_unpadded, unsigned int* new_length)
 {
@@ -442,6 +466,79 @@ __global__ void new_resampler_circular_binary_large_timeseries_kernel(float* inp
   }
 }
 
+__global__ void remove_roemer_delay_elliptical_orbits_kernel(double* device_start_timeseries, 
+    double* device_roemer_delay_removed_timeseries,
+    double omega, double tau, double phi_normalised, double long_periastron, double eccentricity,
+    unsigned long size, double sampling_time)
+
+{
+for( unsigned long idx = blockIdx.x*blockDim.x + threadIdx.x ; idx < size ; idx += blockDim.x*gridDim.x )
+{
+double roemer_delay = get_roemer_delay_elliptical_value(idx, omega, tau, phi_normalised, long_periastron,
+    eccentricity, sampling_time);
+
+device_roemer_delay_removed_timeseries[idx] = device_start_timeseries[idx] - roemer_delay;
+}
+}
+
+/* 1. Lerp Algorithm equivalent to np.interp and scipy.interpolate.interp1d in python
+
+Definitions:
+xp --> xarray of data --> device_roemer_delay_removed_timeseries
+yp --> yarray of data --> input_d
+x ----> xarray where we want to evaulate the interpolated values ---> output_samples_array
+y ----> yarray we want to calculate ---> output_d
+size ---> len(xp) == len(yp)
+x_size ---> len(x) 
+
+Assume xp is sorted in ascending order.
+1. For each value of x, find the segment/interval in xp that contains x. Use a binary search algorithm. Scales as O(logn)
+2. Use equation y=mx+b to calculate interpolated value based on the segment chosen from step 1.
+*/
+
+
+__device__ void bsearch_range(double *a, double key, unsigned long len_a, unsigned long *idx){
+  unsigned long lower = 0;
+  unsigned long upper = len_a;
+  unsigned long midpt;
+  while (lower < upper){
+
+    // '>>1' is the right bitshift operator which is equivalent to dividing by 2 for unsigned numbers.
+
+    midpt = (lower + upper)>>1;
+    if (a[midpt] < key) lower = midpt +1;
+    else upper = midpt;
+    }
+  *idx = lower;
+  return;
+  }
+
+  //                                                      xp,                                           yp,                  xp_len,                 x_len,       x,             y
+  __global__ void resample_using_1D_lerp_kernel(double *device_roemer_delay_removed_timeseries, float  *input_d, unsigned long xp_len, unsigned long x_len, double *output_samples_array, float *output_d){
+  
+    //for (unsigned long i = threadIdx.x+blockDim.x*blockIdx.x; i < x_len; i+=gridDim.x*blockDim.x){
+    for (unsigned long i = threadIdx.x+blockDim.x*blockIdx.x; i < xp_len; i+=gridDim.x*blockDim.x){
+    
+      double val = output_samples_array[i];
+      if ((val >= device_roemer_delay_removed_timeseries[0]) && (val <= device_roemer_delay_removed_timeseries[xp_len - 1])){
+        unsigned long idx;
+        bsearch_range(device_roemer_delay_removed_timeseries, val, xp_len, &idx);
+        double xlv = device_roemer_delay_removed_timeseries[idx - 1];
+        double xrv = device_roemer_delay_removed_timeseries[idx];
+        double ylv = input_d[idx - 1];
+        double yrv = input_d[idx];
+
+       // y  =      m                *   x       + b
+       output_d[i] = ((yrv-ylv)/(xrv-xlv)) * (val-xlv) + ylv;
+      }
+         
+
+    }
+    //Add padding here.
+
+  }
+
+
 
 void device_resampleII(float * d_idata, float * d_odata,
                      size_t size, float a,
@@ -470,18 +567,12 @@ void device_timeseries_offset(float * d_idata, float * d_resamp_offset,
     compute_resamp_offset_circular_binary_kernel<<< blocks,max_threads >>>(d_idata, d_resamp_offset, 
                          omega, tau, phi, zero_offset, inverse_tsamp, tsamp, (double) size);
 
-  //compute_resamp_offset_circular_binary_kernel<<< 1,10 >>>(d_idata, d_resamp_offset,
-    //                                                                     omega, tau, phi, zero_offset, inverse_tsamp, tsamp, (double) size);
   ErrorChecker::check_cuda_error("Error from device_timeseries_offset");
 }
 
 
-void device_modulate_time_series_length(float * d_resamp_offset, unsigned int nsamples_unpadded, unsigned int * new_length)
+void device_modulate_time_series_length(float* d_resamp_offset, unsigned int nsamples_unpadded, unsigned int* new_length)
 {
-
-
-  //dim3 dimBlockResampLength(1); // single thread per block (1D)
-  //dim3 dimGridResampLength(1);  // single block in grid (1D)
 
   unsigned blocks = 1;
   unsigned threads = 1;
@@ -490,12 +581,8 @@ void device_modulate_time_series_length(float * d_resamp_offset, unsigned int ns
   ErrorChecker::check_cuda_error("Error from device_modulate_time_series_length");
 }
 
-void device_new_modulate_time_series_length(float * d_resamp_offset, unsigned int nsamples_unpadded, unsigned int * new_length)
+void device_new_modulate_time_series_length(float* d_resamp_offset, unsigned int nsamples_unpadded, unsigned int* new_length)
 {
-
-
-  //dim3 dimBlockResampLength(1); // single thread per block (1D)
-  //dim3 dimGridResampLength(1);  // single block in grid (1D)
 
   unsigned blocks = 1;
   unsigned threads = 1;
@@ -505,7 +592,7 @@ void device_new_modulate_time_series_length(float * d_resamp_offset, unsigned in
 }
 
 
-void device_resample_circular_binary(float * d_idata, float * d_odata, float * d_resamp_offset,
+void device_resample_circular_binary(float* d_idata, float* d_odata, float* d_resamp_offset,
                      unsigned int new_length, unsigned int max_threads, unsigned int max_blocks)
 {
 
@@ -513,23 +600,52 @@ void device_resample_circular_binary(float * d_idata, float * d_odata, float * d
   if (blocks > max_blocks)
     blocks = max_blocks;
   resamp_circular_binary_kernel<<< blocks,max_threads >>>(d_idata, d_odata, d_resamp_offset, new_length);
-  //resamp_circular_binary_kernel<<< 1,10 >>>(d_idata, d_odata, d_resamp_offset, new_length);
   ErrorChecker::check_cuda_error("Error from device_resample_circular_binary");
 }
 
 
-void device_resampler_circular_binary_large_timeseries(float * d_idata, float * d_odata, double omega, double tau, double phi, double zero_offset, double inverse_tsamp, double tsamp, unsigned int size, unsigned int max_threads, unsigned int max_blocks)
+void device_resampler_circular_binary_large_timeseries(float* d_idata, float* d_odata, double omega, double tau, double phi, double zero_offset, double inverse_tsamp, double tsamp, unsigned int size, unsigned int max_threads, unsigned int max_blocks)
 {
 
   unsigned blocks = size/max_threads + 1;
   if (blocks > max_blocks)
     blocks = max_blocks;
-  //printf("Inverse_tsamp2: %.6f, zero_offset2: %.6f, Size2: %d \n", inverse_tsamp, zero_offset, size);
-  //new_resampler_circular_binary_large_timeseries_kernel<<< blocks,max_threads >>>(d_idata, d_odata, omega,
   new_resampler_circular_binary_large_timeseries_kernel<<< blocks,max_threads >>>(d_idata, d_odata, omega,
   tau, phi, zero_offset, inverse_tsamp, tsamp, size);
   ErrorChecker::check_cuda_error("Error from device_resampler_circular_binary_large_timeseries");
 }
+
+
+
+void device_remove_roemer_delay_elliptical(double* start_timeseries_array, double* roemer_delay_removed_timeseries_array,
+     double omega, double tau, double phi_normalised, double long_periastron, double eccentricity, 
+     double sampling_time, unsigned int size, unsigned int max_threads, unsigned int max_blocks)
+{
+
+  unsigned blocks = size/max_threads + 1;
+  if (blocks > max_blocks)
+    blocks = max_blocks;
+
+  remove_roemer_delay_elliptical_orbits_kernel<<< blocks,max_threads >>>(start_timeseries_array, roemer_delay_removed_timeseries_array, omega,
+  tau, phi_normalised, long_periastron, eccentricity, size, sampling_time);
+ 
+  ErrorChecker::check_cuda_error("Error from device_remove_roemer_delay_elliptical");
+}
+
+void device_resample_using_1D_lerp(double *device_roemer_delay_removed_timeseries, float  *input_d, 
+    unsigned long xp_len, unsigned long x_len, double *output_samples_array, float *output_d,
+    unsigned int max_threads, unsigned int max_blocks)
+{
+
+unsigned blocks = xp_len/max_threads + 1;
+if (blocks > max_blocks)
+  blocks = max_blocks;
+resample_using_1D_lerp_kernel<<< blocks,max_threads >>>(device_roemer_delay_removed_timeseries, input_d, xp_len, 
+                                                       x_len, output_samples_array, output_d);
+
+ErrorChecker::check_cuda_error("Error from device_resample_using_1D_lerp");
+}
+
 
 
 
@@ -577,13 +693,15 @@ int device_find_peaks(int n, int start_index, float * d_dat,
   thrust::counting_iterator<int> iter(start_index);
   zip_iterator<tuple<counting_iterator<int>,thrust::device_ptr<float> > > zipped_iter = make_zip_iterator(make_tuple(iter,dptr_dat));
   zip_iterator<tuple<indices_iterator,snr_iterator> > zipped_out_iter = make_zip_iterator(make_tuple(d_index.begin(),d_snrs.begin()));
-  
   //apply execution policy to get some speed up
   int num_copied = thrust::copy_if(thrust::cuda::par(policy), zipped_iter, zipped_iter+n-start_index,
-				   zipped_out_iter,greater_than_threshold(thresh)) - zipped_out_iter;
+                   zipped_out_iter,greater_than_threshold(thresh)) - zipped_out_iter;
+                   
+                   
   thrust::copy(d_index.begin(),d_index.begin()+num_copied,indexes);
   thrust::copy(d_snrs.begin(),d_snrs.begin()+num_copied,snrs);
   ErrorChecker::check_cuda_error("Error from device_find_peaks;");
+  
   return(num_copied);
 }
 

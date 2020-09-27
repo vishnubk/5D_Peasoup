@@ -30,6 +30,19 @@
 #include "pthread.h"
 #include <cmath>
 #include <map>
+#include <thrust/host_vector.h>
+#include <thrust/sequence.h>
+
+/************/
+/* LINSPACE */
+/************/
+// --- Generates N equally spaced, increasing points between a and b and stores them in x
+void linspace(float* x, float a, float b, int N) {
+    float delta_x=(b-a)/(float)N;
+    x[0]=a;
+    for(int k=1;k<N;k++) x[k]=x[k-1]+delta_x;
+ }
+
 
 class DMDispenser {
 private:
@@ -87,20 +100,28 @@ private:
   DMDispenser& manager;
   CmdLineOptions& args;
   AccelerationPlan& acc_plan;
-  //std::vector<float> angular_velocity;
-  //std::vector<float> tau;
-  //std::vector<float> phi;
   unsigned int size;
   int device;
+  double tstart;
   std::map<std::string,Stopwatch> timers;
   
 public:
   CandidateCollection_template_bank dm_trial_cands;
+  
+    /* function to find min, and max of a thrust vector */
+  inline void find_min_max(thrust::device_vector<double> &dev_vec, double *min, double *max){
+    thrust::pair<thrust::device_vector<double>::iterator,thrust::device_vector<double>::iterator> tuple;
+    tuple = thrust::minmax_element(dev_vec.begin(),dev_vec.end());
+    *min = *(tuple.first);
+    *max = *tuple.second;
+}
+
 
   Worker(DispersionTrials<unsigned char>& trials, DMDispenser& manager, 
-	 AccelerationPlan& acc_plan, CmdLineOptions& args, unsigned int size, int device)
-    :trials(trials),manager(manager),acc_plan(acc_plan),args(args),size(size),device(device){}
+	 AccelerationPlan& acc_plan, CmdLineOptions& args, unsigned int size, int device, double tstart)
+    :trials(trials),manager(manager),acc_plan(acc_plan),args(args),size(size),device(device),tstart(tstart){}
   
+
   void start(void)
   {
     //Generate some timer instances for benchmarking
@@ -131,12 +152,20 @@ public:
     Template_Bank* templates;
     templates = new Template_Bank(args.templatefilename);
 
-    std::vector<float> angular_velocity = templates->get_angular_velocity();
-    std::vector<float> tau = templates->get_tau();
-    std::vector<float> phi = templates->get_phi();
+
+    std::vector<double> angular_velocity = templates->get_angular_velocity();
+    std::vector<double> tau = templates->get_tau();
+    std::vector<double> phi = templates->get_phi();
+    std::vector<double> long_periastron = templates->get_long_periastron();
+    std::vector<double> eccentricity = templates->get_eccentricity();
+    
+
+  
+
 
  if (args.verbose)
       std::cout << "Searching "<< tau.size()<< " template-bank trials per DM " << std::endl;
+
     Zapper* bzap;
     if (args.zapfilename!=""){
       if (args.verbose)
@@ -148,6 +177,7 @@ public:
     Dereddener rednoise(size/2+1);
     SpectrumFormer former;
     PeakFinder cand_finder(args.min_snr,args.min_freq,args.max_freq,size);
+
     PeakFinder_template_bank cand_finder_template_bank(args.min_snr,args.min_freq,args.max_freq,size);
     HarmonicSums<float> sums(pspec,args.nharmonics);
     HarmonicFolder harm_folder(sums);
@@ -156,7 +186,7 @@ public:
     HarmonicDistiller_template_bank harm_finder_template_bank(args.freq_tol,args.max_harm,false);
     //AccelerationDistiller acc_still(tobs,args.freq_tol,true);
     //Template_Bank_Distiller template_bank_best(args.freq_tol,true);
-    Template_Bank_Distiller template_bank_best(args.freq_tol,true);
+    //Template_Bank_Distiller template_bank_best(args.freq_tol,true);
     float mean,std,rms;
     float padding_mean;
     int ii;
@@ -224,70 +254,105 @@ public:
 	    std::cout << "Executing inverse FFT" << std::endl;
       c2rfft.execute(d_fseries.get_data(),d_tim.get_data());
 
+      
       if (args.verbose)
           std::cout << "Searching "<< tau.size()<< " template-bank trials per DM " << std::endl;
     // Template-Bank Loop
       CandidateCollection_template_bank current_template_trial_cands;
+      double sampling_time = trials.get_tsamp();
+
+      unsigned long samples_in_data = trials.get_nsamps();
+      unsigned long output_samples_length_requested = size;
+      unsigned long total_samples = size;
+      
       
       for (int jj=0;jj<tau.size();jj++){
+            
+            //angular_velocity[jj] = 2.0f * M_PI/(angular_velocity[jj] * 3600.0f);
+            //phi[jj] = phi[jj] * 2.0f * M_PI;
+            //long_periastron[jj] = long_periastron[jj] * M_PI/180.0f;
+            double normalised_angular_velocity = angular_velocity[jj]/(2 * M_PI);
+            double orbital_phase_normalised = phi[jj]/(2 * M_PI);
+            double orbital_period_seconds = 2 * M_PI/angular_velocity[jj];
+            double orbital_period_days = orbital_period_seconds/86400.;
+            double T0 = tstart + (orbital_phase_normalised * orbital_period_days);
+            double total_orbits = normalised_angular_velocity * ((tstart - T0) * 86400.);
+            double minele, maxele;
 
+            if (total_orbits < 0) 
+            {	
+                total_orbits = total_orbits + abs(int(total_orbits)) + 1;
+            }
+            else if (total_orbits > 1)
+            {
+                total_orbits = total_orbits - int(total_orbits);
+
+            }
+            double start_time = total_orbits * orbital_period_seconds;
+            thrust::host_vector<double> start_timeseries(total_samples);
+            thrust::host_vector<double> output_samples(size);
+            thrust::sequence(start_timeseries.begin(), start_timeseries.end(), start_time, sampling_time);
+            
+
+            thrust::host_vector<double> roemer_delay_removed_timeseries(total_samples);
+
+            thrust::device_vector<double> device_start_timeseries = start_timeseries;
+            thrust::device_vector<double> device_roemer_delay_removed_timeseries = roemer_delay_removed_timeseries;
+
+
+            /* Thrust vectors cannot be directly passed onto cuda kernels. Hence you need to cast them as raw pointers */
+            double* start_timeseries_array = thrust::raw_pointer_cast(device_start_timeseries.data());
+            double* roemer_delay_removed_timeseries_array = thrust::raw_pointer_cast(device_roemer_delay_removed_timeseries.data());
              if (args.verbose)
 
-                 std::cout << "Resampling to "<< angular_velocity[jj] <<  " " << tau[jj] << " " << phi[jj] << std::endl;
-                 //std::cout << "Size argument before resampling is: "<< size << std::endl;
+                 std::cout << "Resampling to "<< angular_velocity[jj] <<  " " << tau[jj] << " " << phi[jj] << " " << 
+                 long_periastron[jj] << " " << eccentricity[jj]  << std::endl;
+                
+                 /* Subtract roemer delay from our initial orbit*/
+             resampler.remove_roemer_delay(start_timeseries_array, roemer_delay_removed_timeseries_array, size, 
+                angular_velocity[jj], tau[jj], orbital_phase_normalised, long_periastron[jj], eccentricity[jj], sampling_time);
+                //thrust::sort(device_roemer_delay_removed_timeseries.begin(), device_roemer_delay_removed_timeseries.end());
 
-             resampler.resampler_3D_circular_orbit_large_timeseries(d_tim,d_tim_resampled,size,angular_velocity[jj],tau[jj],phi[jj]);
-             
-
-             
-             //if (args.verbose)
-             //    std::cout << "Size is "<< size << std::endl;
-
-             //unsigned int h_new_length = size - 1;
-             //unsigned int *d_new_length;
-             //int size_new_length = sizeof(int);
-             //cudaMalloc((void **)&d_new_length, size_new_length);
-             //cudaMemcpy(d_new_length, &h_new_length, size_new_length, cudaMemcpyHostToDevice);
-
-             ////resampler.binary_modulate_time_series_length(d_tim_resampled, size, d_new_length);
-             //
-             //resampler.new_binary_modulate_time_series_length(d_tim_resampled, size, d_new_length);
-
-             //cudaMemcpy(&h_new_length, d_new_length, size_new_length, cudaMemcpyDeviceToHost);
-             //cudaFree(d_new_length);
-             //if (args.verbose)
-             //    std::cout << "New length is "<< h_new_length << std::endl;
+                /* Find min. and maximum of the roemer delay array*/
+                find_min_max(device_roemer_delay_removed_timeseries, &minele, &maxele);
 
 
- 
-             //if (h_new_length < size)
-             // if (args.verbose)
-             //  std::cout << "Mean padding "<< size-h_new_length << " samples since resampled time series is different from observed" << std::endl;
-             //
-             // padding_mean = stats::mean<float>(d_tim_resampled.get_data(),h_new_length);
-             // d_tim_resampled.fill(h_new_length,size,padding_mean); 
+                /* Using minimum value of roemer delay, now generate your output samples.
+                say minimum is 5400.0, array is then 5400, 5400 + tsamp, 5400 + 2*.tsamp + ... 5400 + (total_samples - 1) * tsamp */ 
 
-             //float* test_block0;
-             //float* test_block1; 
-             //Utils::host_malloc<float>(&test_block0,size);
-             //Utils::host_malloc<float>(&test_block1,size);
 
-             //Utils::d2hcpy(test_block0,d_tim_resampled.get_data(),size);
-             //Utils::d2hcpy(test_block1,d_tim.get_data(),size);
+                thrust::sequence(output_samples.begin(), output_samples.end(), minele, sampling_time);
+                thrust::device_vector<double> device_output_samples_array = output_samples;
+                double* output_samples_array = thrust::raw_pointer_cast(device_output_samples_array.data());
+                //printf("Size, total samplies is %d and %d \n", size, total_samples);
+                
+                
 
-             //for (int ii=0;ii<size;ii++){
-             //if (fabs(test_block0[ii]-test_block1[ii])>0.0001)
-             //   printf("[WRONG (%d)] %f != %f\n",ii,test_block0[ii],test_block1[ii]);
-             //printf("%d %f %f \n",ii,test_block0[ii], test_block1[ii]);
-//  }
+                resampler.resample_using_1D_lerp(roemer_delay_removed_timeseries_array, d_tim, size, size, 
+                    output_samples_array, d_tim_resampled);
 
-           // Utils::host_free(test_block0);
-           // Utils::host_free(test_block1);
+                //if (output_samples_length_requested - samples_in_data > 0){
+                //  if (args.verbose)
+	            //    std::cout << "You asked for more samples than available in data. Will do mean padding" << std::endl;
+
+                //        padding_mean = stats::mean<float>(d_tim_resampled.get_data(),trials.get_nsamps());
+                //        d_tim.fill(trials.get_nsamps(),d_tim.get_nsamps(),padding_mean);
+                // }
+               
+
+
+
+
+                /* Checking roemer delay array by copying back to host */
+               // roemer_delay_removed_timeseries = device_roemer_delay_removed_timeseries;
+               // std::cout << "result is "<< roemer_delay_removed_timeseries[2816] << " " << roemer_delay_removed_timeseries[2817] << " " << roemer_delay_removed_timeseries[total_samples - 1] << " "
+               // << start_timeseries[0] << " " << start_timeseries[1] << std::endl;
+              //  exit(0);
 
              if (args.verbose)
               std::cout << "Execute forward FFT" << std::endl;
             r2cfft.execute(d_tim_resampled.get_data(),d_fseries.get_data());
-            //r2cfft.execute(d_tim.get_data(),d_fseries.get_data());
+           
 
             if (args.verbose)
               std::cout << "Form interpolated power spectrum" << std::endl;
@@ -300,10 +365,9 @@ public:
             if (args.verbose)
               std::cout << "Harmonic summing" << std::endl;
             harm_folder.fold(pspec);
-
             if (args.verbose)
               std::cout << "Finding peaks" << std::endl;
-            SpectrumCandidates_templatebank template_bank_trial_cands(tim.get_dm(),ii,angular_velocity[jj],tau[jj],phi[jj]);
+            SpectrumCandidates_templatebank template_bank_trial_cands(tim.get_dm(),ii,angular_velocity[jj],tau[jj],phi[jj],long_periastron[jj],eccentricity[jj]);
             cand_finder_template_bank.find_candidates(pspec,template_bank_trial_cands);
             cand_finder_template_bank.find_candidates(sums,template_bank_trial_cands);
 
@@ -314,8 +378,8 @@ public:
 
              if (args.verbose)
              std::cout << "Distilling template bank trials" << std::endl;
-            //dm_trial_cands.append(current_template_trial_cands.cands);
-            dm_trial_cands.append(template_bank_best.distill_template_bank(current_template_trial_cands.cands));
+            dm_trial_cands.append(current_template_trial_cands.cands);
+            //dm_trial_cands.append(template_bank_best.distill_template_bank(current_template_trial_cands.cands));
 
     }
 
@@ -406,14 +470,16 @@ int main(int argc, char **argv)
   if (args.size==0)
     size = Utils::prev_power_of_two(filobj.get_nsamps());
   else
-    //size = std::min(args.size,filobj.get_nsamps());
     size = args.size;
+
   if (args.verbose)
     std::cout << "Filterbank has " << filobj.get_nsamps() << " points" << std::endl;
     std::cout << "Setting transform length to " << size << " points" << std::endl;
   
-
-  std::cout << "Tsamp is"<< filobj.get_tsamp() << std::endl;
+    std::cout << std::setprecision(15);
+    std::cout << "Tsamp is "<< filobj.get_tsamp() << std::endl;
+    double tstart = filobj.get_tstart();
+    std::cout << "Tstart is "<< filobj.get_tstart() << std::endl;
   
   AccelerationPlan acc_plan(args.acc_start, args.acc_end, args.acc_tol,
         		    args.acc_pulse_width, size, filobj.get_tsamp(),
@@ -448,7 +514,7 @@ if (args.templatefilename==""){
     dispenser.enable_progress_bar();
   
   for (int ii=0;ii<nthreads;ii++){
-    workers[ii] = (new Worker(trials,dispenser,acc_plan, args,size,ii));
+    workers[ii] = (new Worker(trials,dispenser,acc_plan, args,size,ii, tstart));
     pthread_create(&threads[ii], NULL, launch_worker_thread, (void*) workers[ii]);
   }
 
@@ -494,7 +560,7 @@ if (args.templatefilename==""){
   dm_cands.cands.resize(new_size);
 
   CandidateFileWriter_template_bank cand_files(args.outdir);
-  cand_files.write_binary(dm_cands.cands,"candidates_template_bank.peasoup");
+  //cand_files.write_binary(dm_cands.cands,"candidates_template_bank.peasoup");
   OutputFileWriter_template_bank stats;
   stats.add_misc_info();
   stats.add_header(filename);

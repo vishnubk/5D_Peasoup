@@ -68,6 +68,21 @@ public:
     device_resampler_circular_binary_large_timeseries(input.get_data(), output.get_data(), omega, tau, phi, zero_offset, 1/input.get_tsamp(), input.get_tsamp(), size, max_threads, max_blocks);
   }
 
+  void remove_roemer_delay(double* start_timeseries_array, double* roemer_delay_removed_timeseries_array, unsigned int size,\
+   double omega, double tau, double phi_normalised, double long_periastron, double eccentricity, double sampling_time)
+
+   {
+   
+   device_remove_roemer_delay_elliptical(start_timeseries_array, roemer_delay_removed_timeseries_array, omega, tau, phi_normalised, long_periastron, eccentricity, sampling_time, size, max_threads, max_blocks);
+   }
+
+    void resample_using_1D_lerp(double* roemer_delay_removed_timeseries_array, DeviceTimeSeries<float>& input,  unsigned long xp_len, 
+    unsigned long x_len, double* output_samples_array, DeviceTimeSeries<float>& output)
+
+   {
+   
+   device_resample_using_1D_lerp(roemer_delay_removed_timeseries_array, input.get_data(), xp_len, x_len, output_samples_array, output.get_data(), max_threads, max_blocks);
+   }
 
 };
 

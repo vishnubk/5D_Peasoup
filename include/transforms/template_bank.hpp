@@ -7,13 +7,15 @@
 #include <string>
 #include <vector>
 #include <iterator>
-
+#include <math.h>
 class Template_Bank {
 private:
   bool d_mem_allocated;
-  std::vector<float> angular_velocity; // Angular Velocity = 2pi/orbital period
-  std::vector<float> tau;              // asini in light-seconds
-  std::vector<float> phi;              // initial orbital phase (0,2pi)
+  std::vector<double> angular_velocity; // Angular Velocity = 2pi/orbital period
+  std::vector<double> tau;              // asini in light-seconds
+  std::vector<double> phi;              // initial orbital phase (0,2pi)
+  std::vector<double> long_periastron;              // Longtitude of Periastron (0,2pi)
+  std::vector<double> eccentricity;              // Eccentricity (0,1)
 
 std::vector<std::string> split(std::string const &input) {
     std::stringstream buffer(input);
@@ -43,6 +45,8 @@ public:
 	angular_velocity.push_back(::atof(split_line[0].c_str()));
 	tau.push_back(::atof(split_line[1].c_str()));
 	phi.push_back(::atof(split_line[2].c_str()));
+    long_periastron.push_back(::atof(split_line[3].c_str()));
+    eccentricity.push_back(::atof(split_line[4].c_str()));
       
       }
     }
@@ -51,16 +55,27 @@ public:
   }
 
 
-   std::vector<float> get_angular_velocity(void){
+   std::vector<double> get_angular_velocity(void){
+    //angular_velocity = 2.0f * M_PI/(angular_velocity * 3600.0f);
     return angular_velocity;
       }
 
-   std::vector<float> get_tau(void){
+   std::vector<double> get_tau(void){
     return tau;
      }
 
-    std::vector<float> get_phi(void){
+    std::vector<double> get_phi(void){
+     //phi = phi * 2.0f * M_PI;
      return phi;
+      }
+
+     std::vector<double> get_long_periastron(void){
+     //long_periastron = long_periastron * M_PI/180.0f;
+     return long_periastron;
+      }
+
+     std::vector<double> get_eccentricity(void){
+     return eccentricity;
       }
 
   //void zap(DeviceFourierSeries<cufftComplex>& fseries){

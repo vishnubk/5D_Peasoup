@@ -286,6 +286,9 @@ private:
     double fundi_omega = cands[idx].omega;
     double fundi_tau = cands[idx].tau;
     double fundi_phi = cands[idx].phi;
+    double fundi_long_periastron = cands[idx].long_periastron;
+    double fundi_eccentricity = cands[idx].eccentricity;
+    double fundi_porb = 2 * M_PI/fundi_omega ;
     double template_bank_freq;
     double edge = fundi_freq*tolerance;
     for (ii=idx+1;ii<size;ii++){
@@ -293,6 +296,8 @@ private:
       if (cands[ii].nh > cands[idx].nh){
 	continue;
 	}*/
+      double T0 = fundi_phi * fundi_porb;
+      //double mean_anomaly = fundi_omega * 
 
       min_doppler_fundi_freq = min_doppler_freq_template_bank(fundi_freq, fundi_omega, fundi_tau);
       max_doppler_fundi_freq = max_doppler_freq_template_bank(fundi_freq, fundi_omega, fundi_tau);

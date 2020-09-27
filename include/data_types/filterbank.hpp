@@ -32,6 +32,8 @@
 #include <stdexcept>
 #include "data_types/header.hpp"
 #include "utils/exceptions.hpp"
+//#include "/fred/oz002/vishnu/software/template_bank_gpu/include/data_types/header.hpp"
+//#include "/fred/oz002/vishnu/software/template_bank_gpu/include/utils/exceptions.hpp"
 
 /*!
   \brief Base class for handling filterbank data.
@@ -51,6 +53,7 @@ protected:
   float fch1; /*!< Frequency of top channel (MHz) */ 
   float foff; /*!< Channel bandwidth (MHz) */ 
   float tsamp; /*!< Sampling time (seconds) */ 
+  double tstart; /*!<Start time of observation (MJD) */
   
   /*!
     \brief Instantiate a new Filterbank object with metadata.
@@ -65,12 +68,13 @@ protected:
     \param fch1 The centre frequency of the first data channel.
     \param foff The bandwidth of a frequency channel.
     \param tsamp The sampling time of the data.
+    \param tstart The start time of observation.
   */
   Filterbank(unsigned char* data_ptr, unsigned int nsamps,
 	     unsigned int nchans, unsigned char nbits,
-	     float fch1, float foff, float tsamp)
+	     float fch1, float foff, float tsamp, double tstart)
     :data(data_ptr),nsamps(nsamps),nchans(nchans),
-     nbits(nbits),fch1(fch1),foff(foff),tsamp(tsamp){}
+     nbits(nbits),fch1(fch1),foff(foff),tsamp(tsamp),tstart(tstart){}
   
   /*!
     \brief Instantiate a new default Filterbank object.
@@ -80,7 +84,7 @@ protected:
   */
   Filterbank(void)
     :data(0),nsamps(0),nchans(0),
-     nbits(0),fch1(0.0),foff(0.0),tsamp(0.0){}
+     nbits(0),fch1(0.0),foff(0.0),tsamp(0.0),tstart(0.0){}
 
 public:
   
@@ -97,6 +101,20 @@ public:
     \param tsamp The sampling time of the data (in seconds).
   */
   virtual void set_tsamp(float tsamp){this->tsamp = tsamp;}
+
+  /*!
+    \brief Get the currently set start time.
+    
+    \return The currently set tstart time.
+  */
+  virtual double get_tstart(void){return tstart;}
+  
+  /*!
+    \brief Set the tstart time.
+    
+    \param tstart The start time of the observations (in MJD).
+  */
+  virtual void set_tstart(double tstart){this->tstart = tstart;}
 
   /*!
     \brief Get the currently set channel bandwidth.
@@ -235,6 +253,7 @@ public:
     this->nbits = hdr.nbits;
     this->fch1 = hdr.fch1;
     this->foff  = hdr.foff;
+    this->tstart = hdr.tstart;
   }
   
   /*!

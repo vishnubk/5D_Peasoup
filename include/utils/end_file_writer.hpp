@@ -57,6 +57,7 @@ public:
     XML::Element search_options("search_parameters");
     search_options.append(XML::Element("infilename",args.infilename));
     search_options.append(XML::Element("outfilename",args.outfilename));
+    search_options.append(XML::Element("template_bank_file",args.templatefilename));
     search_options.append(XML::Element("killfilename",args.killfilename));
     search_options.append(XML::Element("zapfilename",args.zapfilename));
     search_options.append(XML::Element("max_num_threads",args.max_num_threads));

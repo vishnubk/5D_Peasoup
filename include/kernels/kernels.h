@@ -145,6 +145,13 @@ void device_resample_circular_binary(float * d_idata, float * d_odata, float * d
 
 void device_resampler_circular_binary_large_timeseries(float * d_idata, float * d_odata, double omega, double tau, double phi, double zero_offset, double inverse_tsamp, double tsamp, unsigned int size, unsigned int max_threads, unsigned int max_blocks);
 
+void device_remove_roemer_delay_elliptical(double* start_timeseries_array, double* roemer_delay_removed_timeseries_array,
+     double omega, double tau, double phi_normalised, double long_periastron, double eccentricity, 
+     double sampling_time, unsigned int size, unsigned int max_threads, unsigned int max_blocks);
+
+void device_resample_using_1D_lerp(double *device_roemer_delay_removed_timeseries, float  *input_d, 
+    unsigned long xp_len, unsigned long x_len, double *output_samples_array, float *output_d,
+    unsigned int max_threads, unsigned int max_blocks);
 
 int device_find_peaks(int n,
 		      int start_index,

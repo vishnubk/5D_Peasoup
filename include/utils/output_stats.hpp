@@ -74,6 +74,7 @@ public:
     XML::Element search_options("search_parameters");
     search_options.append(XML::Element("infilename",args.infilename));
     search_options.append(XML::Element("outdir",args.outdir));
+    search_options.append(XML::Element("template_bank_file",args.templatefilename));
     search_options.append(XML::Element("killfilename",args.killfilename));
     search_options.append(XML::Element("zapfilename",args.zapfilename));
     search_options.append(XML::Element("max_num_threads",args.max_num_threads));
@@ -278,6 +279,7 @@ public:
     XML::Element search_options("search_parameters");
     search_options.append(XML::Element("infilename",args.infilename));
     search_options.append(XML::Element("outdir",args.outdir));
+    search_options.append(XML::Element("template_bank_file",args.templatefilename));
     search_options.append(XML::Element("killfilename",args.killfilename));
     search_options.append(XML::Element("zapfilename",args.zapfilename));
     search_options.append(XML::Element("max_num_threads",args.max_num_threads));
@@ -383,6 +385,8 @@ public:
       cand.append(XML::Element("omega",candidates[ii].omega));
       cand.append(XML::Element("tau",candidates[ii].tau));
       cand.append(XML::Element("phi",candidates[ii].phi));
+      cand.append(XML::Element("long_periastron",candidates[ii].long_periastron));
+      cand.append(XML::Element("ecc",candidates[ii].eccentricity));
       cand.append(XML::Element("nh",candidates[ii].nh));
       cand.append(XML::Element("snr",candidates[ii].snr));
       cand.append(XML::Element("folded_snr",candidates[ii].folded_snr));
@@ -409,6 +413,8 @@ public:
       cand.append(XML::Element("omega",candidates[ii].omega));
       cand.append(XML::Element("tau",candidates[ii].tau));
       cand.append(XML::Element("phi",candidates[ii].phi));
+      cand.append(XML::Element("long_periastron",candidates[ii].long_periastron));
+      cand.append(XML::Element("ecc",candidates[ii].eccentricity));
       cand.append(XML::Element("nh",candidates[ii].nh));
       cand.append(XML::Element("snr",candidates[ii].snr));
       cand.append(XML::Element("folded_snr",candidates[ii].folded_snr));
