@@ -153,6 +153,10 @@ void device_resample_using_1D_lerp(double *device_roemer_delay_removed_timeserie
     unsigned long xp_len, unsigned long x_len, double *output_samples_array, float *output_d,
     unsigned int max_threads, unsigned int max_blocks);
 
+void device_get_barycentered_timeseries_elliptical_orbits(float * d_idata, float * d_resampled_data,
+                     unsigned long size, double omega, double tau, double phi, double long_periastron, double eccentricity, 
+                     double inverse_tsamp, double tsamp, unsigned int max_threads, unsigned int max_blocks);
+
 int device_find_peaks(int n,
 		      int start_index,
 		      float * d_dat,

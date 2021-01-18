@@ -374,6 +374,27 @@ __device__ unsigned long getTemplate_Bank_Index(unsigned long idx,
     return __double2ull_rn(idx - (tau * sinX * inverse_tsamp - zero_offset));
 }
 
+__device__ unsigned long getTemplate_Bank_Index_elliptical_orbits(unsigned long idx, double omega, double tau, double phi, 
+    double long_periastron, double eccentricity, double zero_offset,
+    double inverse_tsamp, double tsamp, double c0, double c1, double c2, double c3, double c4, double c5, double c6, double c7, 
+    double s1, double s2, double s3, double s4, double s5, double s6, double s7)
+
+{
+
+    double t = idx * tsamp;
+    /* The constant below is pi/2. This is just a convention for where you define zero point for orbital phase. Done to ensure consistency
+          between the template bank circular & elliptical code  */
+    double mean_anomaly = 1.5707963267948966 - (omega * t + phi);
+    double cosE = c0 + c1 * cos(mean_anomaly) + c2 * cos(2 * mean_anomaly) + c3 * cos(3 * mean_anomaly) + c4 * cos(4 * mean_anomaly) + c5 * cos(5 * mean_anomaly) + c6 * cos(6 * mean_anomaly) + c7 * cos(7 * mean_anomaly);
+
+    double sinE = s1 * sin(mean_anomaly) + s2 * sin(2 * mean_anomaly) + s3 * sin(3 * mean_anomaly) + s4 * sin(4 * mean_anomaly) + s5 * sin(5 * mean_anomaly) + s6 * sin(6 * mean_anomaly) + s7 * sin(7 * mean_anomaly);
+   
+    double bin_offset = tau * (cos(long_periastron) * cosE + sin(long_periastron) * sinE) * inverse_tsamp  - zero_offset;
+ 
+    return __double2ull_rn(idx - bin_offset);
+}
+
+
 __device__ double get_roemer_delay_elliptical_value(unsigned long idx, double omega, double tau, 
     double phi_normalised, double long_periastron, double eccentricity, double sampling_time)
 
@@ -463,6 +484,33 @@ __global__ void new_resampler_circular_binary_large_timeseries_kernel(float* inp
     if (out_idx <= size - 1) 
         output_d[idx] = input_d[out_idx];
       
+  }
+}
+
+__global__ void fast_resampler_elliptical_binary_large_timeseries_kernel(float* d_idata, float* d_resampled_data,
+    double omega, double tau, double phi, double long_periastron, double eccentricity, double zero_offset,  
+    double inverse_tsamp, double tsamp, double c0, double c1, double c2, double c3, double c4, double c5, double c6, double c7, 
+    double s1, double s2, double s3, double s4, double s5, double s6, double s7, unsigned long size)
+
+
+{
+  for( unsigned long idx = blockIdx.x*blockDim.x + threadIdx.x ; idx < size ; idx += blockDim.x*gridDim.x )
+  {
+
+    unsigned long out_idx = getTemplate_Bank_Index_elliptical_orbits(idx, omega, tau, phi, long_periastron, eccentricity, zero_offset,
+    inverse_tsamp, tsamp, c0, c1, c2, c3, c4, c5, c6, c7, s1, s2, s3, s4, s5, s6, s7);
+
+
+    if (out_idx - idx!=0)
+    if (out_idx <= size - 1)
+        d_resampled_data[idx] = d_idata[out_idx];
+
+   /* Zero padding if resampled data needs a bin above fft_size */
+    else{
+
+         d_resampled_data[idx] = 0.0;
+
+        }
   }
 }
 
@@ -646,7 +694,69 @@ resample_using_1D_lerp_kernel<<< blocks,max_threads >>>(device_roemer_delay_remo
 ErrorChecker::check_cuda_error("Error from device_resample_using_1D_lerp");
 }
 
+/* The fn. below is an implementation of the fast 5-D resampler!*/
 
+void device_get_barycentered_timeseries_elliptical_orbits(float * d_idata, float * d_resampled_data,
+                     unsigned long size, double omega, double tau, double phi, double long_periastron, double eccentricity, double inverse_tsamp, double tsamp, unsigned int max_threads, unsigned int max_blocks)
+{
+    /* These values were taken from Dhurandhar et al. 2000. Original derivation can be found in 
+     L. G. Taff, Celestial Mechanics (John Wiley and Sons, Inc., New York 1985), pp. 58-61.
+     Here we expand the taylor series to 7th order which should cover upto eccentricity 0.8. If your system is more eccentric, consider
+     adding higher order terms. Future versions of the software will expand the order depending on the eccentricity' */
+   
+   /* Original expression is given below. To make the code faster, we will get rid of the division terms. 
+    c0 = -0.5 * eccentricity
+    c1 = 1 - (3/8) * eccentricity**2 + (5/192) * eccentricity**4 - (7/9216) * eccentricity**6
+    c2 = 0.5 * eccentricity - (1/3) * eccentricity**3 + (1/16) * eccentricity**5
+    c3 = (3/8) * eccentricity**2 - (45/128) * eccentricity**4 + (567/5120) * eccentricity**6
+    c4 = (1/3) * eccentricity**3 - (2/5) * eccentricity**5
+    c5 = (125/384) * eccentricity**4 - (4375/9216) * eccentricity**6
+    c6 = (27/80) * eccentricity**5
+    c7 = (16807/46080) * eccentricity**6
+
+    s1 = 1 - (5/8) * eccentricity**2 - (11/192) * eccentricity**4 - (457/9216) * eccentricity**6
+    s2 = (1/2) * eccentricity - (5/12) * eccentricity**3 + (1/24) * eccentricity**5
+    s3 = (3/8) * eccentricity**2 - (51/128) * eccentricity**4 + (543/5120) * eccentricity**6
+    s4 = (1/3) * eccentricity**3 - (13/30) * eccentricity**5
+    s5 = (125/384) * eccentricity**4 - (4625/9216) * eccentricity**6
+    s6 = (27/80) * eccentricity**5
+    s7 = (16807/46080) * eccentricity**6 */
+
+                                          
+    double c0 = -0.5 * eccentricity;
+    double c1 = 1 - 0.375 * pow(eccentricity, 2) + 0.02604166666 * pow(eccentricity, 4) - 0.00075954861 * pow(eccentricity, 6);
+    double c2 = 0.5 * eccentricity - 0.33333333 * pow(eccentricity, 3) + 0.0625 * pow(eccentricity, 5);
+    double c3 = 0.375 * pow(eccentricity, 2) - 0.3515625 * pow(eccentricity, 4) + 0.1107421875 * pow(eccentricity, 6);
+    double c4 = 0.33333333 * pow(eccentricity, 3) - 0.4 * pow(eccentricity, 5);
+    double c5 = 0.32552083333 * pow(eccentricity, 4) - 0.47471788194 * pow(eccentricity, 6);
+    double c6 = 0.3375 * pow(eccentricity, 5);
+    double c7 = 0.36473524305 * pow(eccentricity, 6);
+
+    double s1 = 1 - 0.625 * pow(eccentricity, 2) - 0.05729166666 * pow(eccentricity, 4) - 0.04958767361 * pow(eccentricity, 6);
+    double s2 = 0.5 * eccentricity - 0.41666666666 * pow(eccentricity, 3) + 0.04166666666 * pow(eccentricity, 5);
+    double s3 = 0.375 * pow(eccentricity, 2) - 0.3984375 * pow(eccentricity, 4) + 0.1060546875 * pow(eccentricity, 6);
+    double s4 = 0.33333333 * pow(eccentricity, 3) - 0.43333333333 * pow(eccentricity, 5);
+    double s5 = 0.32552083333 * pow(eccentricity, 4) - 0.50184461805 * pow(eccentricity, 6);
+    double s6 = 0.3375 * pow(eccentricity, 5);
+    double s7 = 0.36473524305 * pow(eccentricity, 6);
+
+     /* At t = 0, the \Omega * t term vanishes */
+
+    double cosE = c0 + c1 * cos(phi) + c2 * cos(2 * phi) + c3 * cos(3 * phi) + c4 * cos(4 * phi) + c5 * cos(5 * phi) + c6 * cos(6 * phi) + c7 * cos(7 * phi);
+
+    double sinE = s1 * sin(phi) + s2 * sin(2 * phi) + s3 * sin(3 * phi) + s4 * sin(4 * phi) + s5 * sin(5 * phi) + s6 * sin(6 * phi) + s7 * sin(7 * phi);
+
+    double zero_offset = tau * (cos(long_periastron) * cosE + sin(long_periastron) * sinE) * inverse_tsamp;
+    unsigned blocks = size/max_threads + 1;
+  
+    if (blocks > max_blocks)
+        blocks = max_blocks;
+        fast_resampler_elliptical_binary_large_timeseries_kernel<<< blocks,max_threads >>>(d_idata, d_resampled_data,
+                         omega, tau, phi, long_periastron, eccentricity, zero_offset, inverse_tsamp, tsamp,
+                         c0, c1, c2, c3, c4, c5, c6, c7, s1, s2, s3, s4, s5, s6, s7, size);
+
+    ErrorChecker::check_cuda_error("Error from device_get_barycentered_timeseries_elliptical_orbits");
+}
 
 
 void device_resample(float * d_idata, float * d_odata,

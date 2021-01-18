@@ -262,92 +262,20 @@ public:
       double sampling_time = trials.get_tsamp();
 
       unsigned long samples_in_data = trials.get_nsamps();
-      unsigned long output_samples_length_requested = size;
-      unsigned long total_samples = size;
-      
+      double inverse_tsamp = 1/sampling_time; 
       
       for (int jj=0;jj<tau.size();jj++){
             
-            //angular_velocity[jj] = 2.0f * M_PI/(angular_velocity[jj] * 3600.0f);
-            //phi[jj] = phi[jj] * 2.0f * M_PI;
-            //long_periastron[jj] = long_periastron[jj] * M_PI/180.0f;
-            double normalised_angular_velocity = angular_velocity[jj]/(2 * M_PI);
-            double orbital_phase_normalised = phi[jj]/(2 * M_PI);
-            double orbital_period_seconds = 2 * M_PI/angular_velocity[jj];
-            double orbital_period_days = orbital_period_seconds/86400.;
-            double T0 = tstart + (orbital_phase_normalised * orbital_period_days);
-            double total_orbits = normalised_angular_velocity * ((tstart - T0) * 86400.);
-            double minele, maxele;
-
-            if (total_orbits < 0) 
-            {	
-                total_orbits = total_orbits + abs(int(total_orbits)) + 1;
-            }
-            else if (total_orbits > 1)
-            {
-                total_orbits = total_orbits - int(total_orbits);
-
-            }
-            double start_time = total_orbits * orbital_period_seconds;
-            thrust::host_vector<double> start_timeseries(total_samples);
-            thrust::host_vector<double> output_samples(size);
-            thrust::sequence(start_timeseries.begin(), start_timeseries.end(), start_time, sampling_time);
-            
-
-            thrust::host_vector<double> roemer_delay_removed_timeseries(total_samples);
-
-            thrust::device_vector<double> device_start_timeseries = start_timeseries;
-            thrust::device_vector<double> device_roemer_delay_removed_timeseries = roemer_delay_removed_timeseries;
-
-
-            /* Thrust vectors cannot be directly passed onto cuda kernels. Hence you need to cast them as raw pointers */
-            double* start_timeseries_array = thrust::raw_pointer_cast(device_start_timeseries.data());
-            double* roemer_delay_removed_timeseries_array = thrust::raw_pointer_cast(device_roemer_delay_removed_timeseries.data());
              if (args.verbose)
 
                  std::cout << "Resampling to "<< angular_velocity[jj] <<  " " << tau[jj] << " " << phi[jj] << " " << 
                  long_periastron[jj] << " " << eccentricity[jj]  << std::endl;
                 
-                 /* Subtract roemer delay from our initial orbit*/
-             resampler.remove_roemer_delay(start_timeseries_array, roemer_delay_removed_timeseries_array, size, 
-                angular_velocity[jj], tau[jj], orbital_phase_normalised, long_periastron[jj], eccentricity[jj], sampling_time);
-                //thrust::sort(device_roemer_delay_removed_timeseries.begin(), device_roemer_delay_removed_timeseries.end());
+                 /* Calculate resampled time-series*/
 
-                /* Find min. and maximum of the roemer delay array*/
-                find_min_max(device_roemer_delay_removed_timeseries, &minele, &maxele);
+             resampler.fast_ellitpical_orbit_resampler_large_timeseries(d_tim, d_tim_resampled, size, angular_velocity[jj], tau[jj], phi[jj], long_periastron[jj], eccentricity[jj], sampling_time, inverse_tsamp);
 
 
-                /* Using minimum value of roemer delay, now generate your output samples.
-                say minimum is 5400.0, array is then 5400, 5400 + tsamp, 5400 + 2*.tsamp + ... 5400 + (total_samples - 1) * tsamp */ 
-
-
-                thrust::sequence(output_samples.begin(), output_samples.end(), minele, sampling_time);
-                thrust::device_vector<double> device_output_samples_array = output_samples;
-                double* output_samples_array = thrust::raw_pointer_cast(device_output_samples_array.data());
-                //printf("Size, total samplies is %d and %d \n", size, total_samples);
-                
-                
-
-                resampler.resample_using_1D_lerp(roemer_delay_removed_timeseries_array, d_tim, size, size, 
-                    output_samples_array, d_tim_resampled);
-
-                //if (output_samples_length_requested - samples_in_data > 0){
-                //  if (args.verbose)
-	            //    std::cout << "You asked for more samples than available in data. Will do mean padding" << std::endl;
-
-                //        padding_mean = stats::mean<float>(d_tim_resampled.get_data(),trials.get_nsamps());
-                //        d_tim.fill(trials.get_nsamps(),d_tim.get_nsamps(),padding_mean);
-                // }
-               
-
-
-
-
-                /* Checking roemer delay array by copying back to host */
-               // roemer_delay_removed_timeseries = device_roemer_delay_removed_timeseries;
-               // std::cout << "result is "<< roemer_delay_removed_timeseries[2816] << " " << roemer_delay_removed_timeseries[2817] << " " << roemer_delay_removed_timeseries[total_samples - 1] << " "
-               // << start_timeseries[0] << " " << start_timeseries[1] << std::endl;
-              //  exit(0);
 
              if (args.verbose)
               std::cout << "Execute forward FFT" << std::endl;
@@ -371,6 +299,7 @@ public:
             cand_finder_template_bank.find_candidates(pspec,template_bank_trial_cands);
             cand_finder_template_bank.find_candidates(sums,template_bank_trial_cands);
 
+            
             if (args.verbose)
               std::cout << "Distilling harmonics" << std::endl;
               current_template_trial_cands.append(harm_finder_template_bank.distill_template_bank(template_bank_trial_cands.cands));

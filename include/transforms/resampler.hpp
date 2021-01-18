@@ -84,6 +84,9 @@ public:
    device_resample_using_1D_lerp(roemer_delay_removed_timeseries_array, input.get_data(), xp_len, x_len, output_samples_array, output.get_data(), max_threads, max_blocks);
    }
 
+   void fast_ellitpical_orbit_resampler_large_timeseries(DeviceTimeSeries<float>& input, DeviceTimeSeries<float>& output, unsigned long size, double omega, double tau, double phi, double long_periastron, double eccentricity, double sampling_time, double inverse_tsamp)
+  {
+   device_get_barycentered_timeseries_elliptical_orbits(input.get_data(), output.get_data(), size, omega, tau, phi, long_periastron, eccentricity, inverse_tsamp, sampling_time, max_threads, max_blocks);
+}
 };
-
 
