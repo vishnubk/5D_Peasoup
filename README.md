@@ -10,7 +10,7 @@ This pipeline does a coherent search for circular and elliptical binary orbits (
 1. Install Ben Barsdell's GPU De-dedispersion library "dedisp" from the "arch61" branch of this repo. https://github.com/ewanbarr/dedisp.git (Edit Makefile.inc and point to your CUDA installation). 
 2. Install 5D Peasoup from "fast_bt_resampler_working" branch of this repo. (Edit Makefile.inc and point to your CUDA and Dedisp installation)
 
-## How to Calculate Required amount of orbital templates in your template-bank for a Circular Orbit Search?
+## How to calculate required amount of orbital templates and generate your template-bank for a Circular Orbit Search?
 
 1. Run the code emcee_plot_codes/calculate_circular_orbit_search_template_distribution.py. Tested on python2.7, python3.3, python 3.6. This will calculate the total orbital templates you need for a circular orbit search and print to screen. (Equations 17 and 20 of the paper)
 
@@ -21,7 +21,7 @@ This pipeline does a coherent search for circular and elliptical binary orbits (
 4. If your only interested to do circular orbit searches, I recommend installing the software from the "trapum" branch of this repo https://github.com/vishnubk/3D_peasoup. 
 The installation instructions are identical. That repo has a faster implementation of the time-domain resampler. It avoids the while loop used to solve Kepler's equation iteratively which is required only if the orbit is elliptical. Combining both these repos into one with a single master branch is a work in progress.
 
-## How to Calculate Required amount of orbital templates in your template-bank for an Elliptical Orbit Search?
+## How to calculate required amount of orbital templates and generate your template-bank for an Elliptical Orbit Search?
 
 1. Run emcee_plot_codes/calculate_required_templates_elliptical_orbit_searches.py. Tested on python2.7, python3.3, python 3.6. This will calculate the total orbital templates you need for an elliptical orbit search and print to screen or write to a header file. (Equations 17 and 20 of the paper)
 
