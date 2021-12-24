@@ -19,7 +19,7 @@ This pipeline does a coherent search for circular and elliptical binary orbits (
 3. Alternatively you can also use emcee which uses Goodman & Weare’s Affine Invariant MCMC technique to create a template-bank and plot corner plots for your template density distribution. Check emcee_plot_codes/calculate_circular_orbit_search_template_distribution.py and emcee_plot_codes/make_corner_plots_from_emcee_simulations.py respectively for that. If your going down this route, follow step 1 and whatever total number of templates it outputs (for e.g. 1000), pass that value to --templates.
 
 4. If your only interested to do circular orbit searches, I recommend installing the software from the "trapum" branch of this repo https://github.com/vishnubk/3D_peasoup. 
-The installation instructions are identical. This has a faster implementation of the time-domain resampler. It avoids the while loop used to solve Kepler's equation iteratively which is required only if the orbit is elliptical. Combining both these repos into one is a work in progress.
+The installation instructions are identical. This has a faster implementation of the time-domain resampler. It avoids the while loop used to solve Kepler's equation iteratively which is required only if the orbit is elliptical. Combining both these repos into one with a single master branch is a work in progress.
 
 ## Calculating template density for circular and elliptical orbit searches using Emcee
 Codes to calculate template density using emcee can be found in the emcee_plot_codes directory
