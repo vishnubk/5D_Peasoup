@@ -24,7 +24,7 @@ These templates are used to do a fully coherent search for circular binary orbit
 
 5. Implement a MCMC based on metropolis hastings algorithm using square root of the determinant of the metric tensor as your constant density function. Write Results to file. 
 
-6. This code has only been tested till python 3.3. One of its dependencies mcquad which does the MC integration is not supported in later python versions. I'll try to update this in due time.
+6. This code has only been tested till python 3.6. One of its dependencies mcquad which does the MC integration is not supported in later python versions. I'll try to update this in due time.
 
 """
 
@@ -218,13 +218,13 @@ accepted_templates = accepted_templates[burn_in_steps:]
 
 ''' The file below creates a header file if you would like to check the parameters of your search later '''
 
-if not os.path.exists(output_path + output_filename + '_template_bank_header.txt'):
-    with open(output_path + output_filename + '_template_bank_header.txt', 'w') as outfile:
-             outfile.write('observation time (mins): ' + str(obs_time/60) + ',' + 'orbital period low (hrs): ' + str(p_orb_low_limit/3600) + ',' + 'orbital period high (hrs): ' + str(p_orb_upper_limit/3600) + ',' + 'spin period (ms): ' + str((1/freq) * 1e+3) + ',' + 'prob: ' + str(probability) + ',' + 'templates: ' + str(total_templates_targed_search) + ',' + 'integration error percentage: ' + str((estimated_volume_integral_error/volume_integral_result) * 100) + ',' + 'coverage: ' + str(coverage) + ',' + 'mismatch: ' + str(mismatch) + ',' + 'phase: ' + str(max_initial_orbital_phase) + ',' + 'mass companion: ' + str(max_companion_mass) + '\n')
+if not os.path.exists(output_path + output_filename + '_circular_orbit_header.txt'):
+    with open(output_path + output_filename + '_circular_orbit_header.txt', 'w') as outfile:
+             outfile.write('observation time (mins): ' + str(obs_time/60) + ',' + 'orbital period low (hrs): ' + str(p_orb_low_limit/3600) + ',' + 'orbital period high (hrs): ' + str(p_orb_upper_limit/3600) + ',' + 'spin period (ms): ' + str((1/freq) * 1e+3) + ',' + 'fraction: ' + str(alpha) + ',' + 'prob: ' + str(probability) + ',' + 'templates: ' + str(total_templates_targed_search) + ',' + 'integration error percentage: ' + str((estimated_volume_integral_error/volume_integral_result) * 100) + ',' + 'coverage: ' + str(coverage) + ',' + 'mismatch: ' + str(mismatch) + ',' + 'phase: ' + str(max_initial_orbital_phase) + ',' + 'mass companion: ' + str(max_companion_mass) + '\n')
 
 
 ''' Use the file outputted below as an input to the GPU Pipeline '''
-with open(output_path + output_filename + '_gpu_format.txt', 'a') as outfile:
+with open(output_path + output_filename + '_circular_orbit_gpu_format.txt', 'a') as outfile:
     for i in range(len(accepted_templates)):
         outfile.write(str(accepted_templates[i][0]) + ' ' + str(accepted_templates[i][1]) + ' ' + str(accepted_templates[i][2]) + ' ' + '\n')
     

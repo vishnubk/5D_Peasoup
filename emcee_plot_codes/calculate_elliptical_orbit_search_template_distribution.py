@@ -1,10 +1,8 @@
-import dill
-dill.settings['recurse'] = True
+
 import numpy as np
 import sympy as sy
 sy.init_printing(use_unicode=True)
 import cloudpickle
-import pickle
 import sys, time
 import math
 import emcee
@@ -42,7 +40,7 @@ with open('pickled_files/pickled_elliptical_orbit_determinant_metric_tensor_fn.p
 
 def det_sq_root(freq, angular_velocity, projected_radius, orbital_phase, longitude_periastron, eccentricity, obs_time, pi_value):
 
-   ''' This calculation is done in dimensionless units. Hence, multiply with the scaling factor (2 * pi * f * T)**5 '''
+    ''' This calculation is done in dimensionless units. Hence, multiply with the scaling factor (2 * pi * f * T)**5 '''
 
     X_val =  projected_radius * np.sin(longitude_periastron)/obs_time
     Y_val =  projected_radius * np.cos(longitude_periastron)/obs_time
