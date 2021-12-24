@@ -10,7 +10,7 @@ This pipeline does a coherent search for circular and elliptical binary orbits (
 1. Install Ben Barsdell's GPU De-dedispersion library "dedisp" that does an incoherent dedispersion from this repo. https://github.com/ewanbarr/dedisp.git (Edit Makefile.inc and point to your CUDA installation)
 2. Install the software from "fast_bt_resampler_working" branch of 5D Peasoup. (Edit Makefile.inc and point to your CUDA and Dedisp installation)
 
-## How to Calculate Required amount of Orbital templates for a Circular Orbit Search.
+## How to Calculate Required amount of Orbital templates for a Circular Orbit Search?
 
 1. Run the code emcee_plot_codes/calculate_circular_orbit_search_template_distribution.py . Tested on python2.7 and python3.3. This will calculate the total orbital templates you need for a circular orbit search and print to screen.
 
