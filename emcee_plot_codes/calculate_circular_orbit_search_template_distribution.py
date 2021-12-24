@@ -60,6 +60,7 @@ metric_tensor3D=np.empty(shape=(3,3), dtype=object)
 for i in range(len(variables)):
     for j in range(len(variables)):
         metric_tensor3D[i][j]=metric_tensor_w_f_row_column[i][j] * metric_tensor[0][0] - (metric_tensor[0][i+1] * metric_tensor[j+1][0])
+        
 metric_tensor3D=sy.Matrix(metric_tensor3D)
 
 ''' Below is a hack for calculating the determinant by explicitily forcing sympy to brute force calculate the determinant, do not use the default .det() function from sympy on your metric tensor!! 
@@ -126,7 +127,7 @@ c = 2.99792458e+08
 pi_1 = np.pi
 obs_time = args.obs_time * 60 # 18 mins
 p_orb_upper_limit = args.porb_high * 60
-p_orb_low_limit = args.porb_low * 60 #1.5 hours
+p_orb_low_limit = args.porb_low * 60 
 min_pulsar_mass = args.min_pulsar_mass
 max_companion_mass = args.max_comp_mass
 alpha = args.fraction
@@ -134,7 +135,7 @@ coverage = args.coverage
 mismatch = args.mismatch
 ncpus = args.ncpus
 fastest_spin_period_ms = args.spin_period
-spin_freq = 1/(fastest_spin_period_ms * 1e-03) # 5ms
+spin_freq = 1/(fastest_spin_period_ms * 1e-03)
 max_initial_orbital_phase = 2 * np.pi
 max_longitude_periastron = 2 * np.pi
 output_path = args.output_path
