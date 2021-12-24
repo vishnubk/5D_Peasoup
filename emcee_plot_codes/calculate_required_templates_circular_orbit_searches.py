@@ -1,6 +1,6 @@
 
 #!/usr/bin/env 
-# -*- coding: utf-8 -*- Tested on python 2.7 and python 3.3
+# -*- coding: utf-8 -*- Tested on python 2.7, python 3.3, python 3.6
 # =============================================================================
 # Created By  : Vishnu Balakrishnan
 # Created Date: Mon June 4th 12:34:00 UTC 2018

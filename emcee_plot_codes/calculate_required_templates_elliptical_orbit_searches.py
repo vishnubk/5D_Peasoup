@@ -1,5 +1,5 @@
 #!/usr/bin/env
-# -*- coding: utf-8 -*- Tested on python 2.7 and python 3.3
+# -*- coding: utf-8 -*- Tested on python 2.7, python 3.3 and python 3.6
 # =============================================================================
 # Created By  : Vishnu Balakrishnan
 # Created Date: Mon June 8th 12:34:00 UTC 2020
@@ -151,11 +151,6 @@ if not os.path.exists(output_path + output_filename + '_elliptical_orbit_templat
     with open(output_path + output_filename + '_elliptical_orbit_template_bank_header.txt', 'w') as outfile:
              outfile.write('observation time (mins): ' + str(obs_time/60) + ',' + 'orbital period low (hrs): ' + str(p_orb_low_limit/3600) + ',' + 'orbital period high (hrs): ' + str(p_orb_upper_limit/3600) + ',' + 'spin period (ms): ' + str(fastest_spin_period_ms) + ',' + 'fraction: ' + str(alpha) + ',' + 'templates: ' + str(total_templates_required) + ',' + 'integration error percentage: ' + str((estimated_volume_integral_error/volume_integral_result) * 100) + ',' + 'coverage: ' + str(coverage) + ',' + 'mismatch: ' + str(mismatch) + ',' + 'phase: ' + str(max_initial_orbital_phase) + ',' + 'mass companion: ' + str(max_companion_mass) + ',' + 'mass pulsar: ' + str(min_pulsar_mass) + ',' + 'Prob: ' + str(probability) + ',' + 'Max_Periastron: ' + str(max_longitude_periastron) + ',' + 'Max_Ecc: ' + str(max_eccentricity) + '\n')
 
-#with open(output_path + output_filename + '_elliptical_orbit_template_bank_header.txt', 'a') as outfile:
-#    outfile.write(str(obs_time/60) + ',' + str(p_orb_low_limit/3600) + ',' + str(p_orb_upper_limit/3600) + ',' + str(fastest_spin_period_ms) + ',' + str(alpha) + ',' + \
-#                  str(total_templates_required) + ',' + str((estimated_volume_integral_error/volume_integral_result) * 100) + ',' + str(coverage) + ',' + str(mismatch) + ',' + str(max_initial_orbital_phase) + ',' + \
-#                  str(max_companion_mass) + ',' + str(min_pulsar_mass) + ',' + str(max_longitude_periastron) + ',' + str(max_eccentricity) + '\n')
-#
 
 
 
