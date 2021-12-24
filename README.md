@@ -8,7 +8,7 @@ This pipeline does a coherent search for circular and elliptical binary orbits (
 ## How to install this GPU pipeline?
 
 1. Install Ben Barsdell's GPU De-dedispersion library "dedisp" that does an incoherent dedispersion from this repo. https://github.com/ewanbarr/dedisp.git (Edit Makefile.inc and point to your CUDA installation)
-2. Install 5D Peasoup. (Edit Makefile.inc and point to your CUDA and Dedisp installation)
+2. Install the software from "fast_bt_resampler_working" branch of 5D Peasoup. (Edit Makefile.inc and point to your CUDA and Dedisp installation)
 
 ## How to Calculate Required amount of Orbital templates for a Circular Orbit Search.
 
