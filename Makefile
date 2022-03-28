@@ -28,14 +28,14 @@ NVCCFLAGS_FFA  = ${UCFLAGS} ${OPTIMISE} ${NVCC_FFA_COMP_FLAGS} -lineinfo --machi
 CFLAGS    = ${UCFLAGS} -fPIC ${OPTIMISE} ${DEBUG}
 
 OBJECTS   = ${OBJ_DIR}/kernels.o
-EXE_FILES = ${BIN_DIR}/peasoup #${BIN_DIR}/resampling_test ${BIN_DIR}/harmonic_sum_test
+EXE_FILES = ${BIN_DIR}/elliptical_orbit_template_bank_peasoup #${BIN_DIR}/resampling_test ${BIN_DIR}/harmonic_sum_test
 
 all: directories ${OBJECTS} ${EXE_FILES}
 
 ${OBJ_DIR}/kernels.o: ${SRC_DIR}/kernels.cu
 	${NVCC} -c ${NVCCFLAGS} ${INCLUDE} $<  -o $@
 
-${BIN_DIR}/peasoup: ${SRC_DIR}/pipeline_multi.cu ${OBJECTS}
+${BIN_DIR}/elliptical_orbit_template_bank_peasoup: ${SRC_DIR}/pipeline_multi.cu ${OBJECTS}
 	${NVCC} ${NVCCFLAGS} ${INCLUDE} ${LIBS} $^ -o $@
 
 ${BIN_DIR}/ffaster: ${SRC_DIR}/ffa_pipeline.cu ${OBJECTS}
@@ -76,4 +76,4 @@ clean:
 	@rm -rf ${OBJ_DIR}/*
 
 install: all
-	cp $(BIN_DIR)/peasoup $(INSTALL_DIR)/bin
+	cp $(BIN_DIR)/elliptical_orbit_template_bank_peasoup $(INSTALL_DIR)/bin

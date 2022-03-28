@@ -1,0 +1,1 @@
+observation time (mins): 4.5,orbital period low (hrs): 0.18333333333333332,orbital period high (hrs): 0.75,spin period (ms): 2.5,fraction: 0.5,prob: 0.1339745962155614,templates: 11018.361004533033,integration error percentage: 1.1546808242726414,coverage: 0.9,mismatch: 0.2,phase: 6.283185307179586,mass companion: 1.6
