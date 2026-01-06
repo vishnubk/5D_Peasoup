@@ -1,3 +1,15 @@
+
+# Repository Retired
+
+⚠️ This repository is **retired** and no longer maintained.
+
+I have merged all **circular and elliptical Keplerian template bank search** functionality into **Peasoup**:
+
+**[Peasoup Repo Link](https://github.com/ewanbarr/peasoup)**
+
+Please refer to the **Peasoup README** for setup and usage instructions.
+
+
 # 5D Peasoup
 
 ## General Description 
